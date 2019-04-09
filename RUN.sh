@@ -10,18 +10,23 @@ LOCAL_DIR=`pwd`
 run_docker() {
 	echo "
 	docker run \
-		-it \
+		-d \
 		--env-file "./env.list" \
 		-v "${LOCAL_DIR}/tls:/tls" \
 		-p 9999:9999 \
+		--restart unless-stopped \
 		go-proxy:v1
 "
 	docker run \
-		-it \
+		-d \
 		--env-file "./env.list" \
 		-v "${LOCAL_DIR}/tls:/tls" \
 		-p 9999:9999 \
+		--restart unless-stopped \
 		go-proxy:v1
+
+	# -d : detach
+	# -it : interactive with TTY
 }
 
 run_local() {
