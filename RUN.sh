@@ -1,15 +1,51 @@
 #!/bin/bash
 
-# example on how to pass in the various parameters
+cd `dirname "$0"`
 
-# note: google example does not work, try instead your favorite SPA web-app URL instead
+# common ENV VAR list fed into both local and docker runs
+ENV_FILE="./env.list"
 
-go build && \
-	LOCAL_ADDR=":9999" \
-	LOCAL_CERT_FILE="" \
-	LOCAL_KEY_FILE="" \
-	REMOTE_ADDR="https://www.google.com" \
-	REMOTE_NAME="" \
-	REMOTE_CERT_FILE="" \
-		./go-reverse-proxy
+LOCAL_DIR=`pwd`
 
+run_docker() {
+	echo "
+	docker run \
+		-it \
+		--env-file "./env.list" \
+		-v "${LOCAL_DIR}/tls:/tls" \
+		-p 9999:9999 \
+		go-proxy:v1
+"
+	docker run \
+		-it \
+		--env-file "./env.list" \
+		-v "${LOCAL_DIR}/tls:/tls" \
+		-p 9999:9999 \
+		go-proxy:v1
+}
+
+run_local() {
+	source "$ENV_FILE"
+	export $(cut -d= -f1 ${ENV_FILE})
+	echo -e "\n./go-reverse-proxy\n"
+	      ./go-reverse-proxy
+}
+
+MODE="local"
+
+if [ "$1" == "docker" ]; then
+	MODE="docker"
+fi
+
+echo -e "\nrun mode: $MODE"
+
+if [ "$MODE" == "local" ]; then
+	echo "
+Note: to perform a docker run: $0 docker
+"
+	run_local
+elif [ "$MODE" == "docker" ]; then
+	run_docker
+else
+	echo "unrecognized run mode: '$MODE' - expecting 'local' or 'docker'"
+fi
